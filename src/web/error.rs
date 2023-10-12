@@ -1,9 +1,10 @@
-use crate::{crypt, model};
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use serde_with::serde_as;
+
+use crate::model;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -11,18 +12,11 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     Model(model::Error),
-    Crypt(crypt::Error),
 }
 
 impl From<model::Error> for Error {
     fn from(val: model::Error) -> Self {
         Self::Model(val)
-    }
-}
-
-impl From<crypt::Error> for Error {
-    fn from(val: crypt::Error) -> Self {
-        Self::Crypt(val)
     }
 }
 

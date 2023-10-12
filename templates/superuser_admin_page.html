@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block content %}
+  <form hx-post="/superuser/organization" r>
+      <label for="name">name</label>
+      <input id="name" name="name" type="text" />
+      <label for="display-name">display name</label>
+      <input id="display-name" name="display-name" type="text" />
+      <button type="submit">Submit</button>
+  </form>
+  <div hx-post="/superuser/organization/fragment/list" hx-trigger="load">
+    
+  </div>
+  {% for organiztion in organizations %}
+    <li>{{ organiztion.name }}</li>
+  {% endfor %}
+{% endblock %}

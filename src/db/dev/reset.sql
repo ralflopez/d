@@ -1,6 +1,8 @@
 DROP TABLE IF EXISTS inventory_transaction_items;
 DROP TABLE IF EXISTS inventory_transactions;
 DROP TABLE IF EXISTS inventory_logs;
+DROP TABLE IF EXISTS product_categories;
+DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS warehouses;
 DROP TABLE IF EXISTS user_permissions;
@@ -87,6 +89,33 @@ CREATE TABLE IF NOT EXISTS products (
 	  ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS categories (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  organization_id BIGINT NOT NULL,
+
+  CONSTRAINT fk_category_organizations
+    FOREIGN KEY(organization_id)
+	  REFERENCES organizations(id)
+	  ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS product_categories (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  category_id BIGINT NOT NULL,
+  product_id BIGINT NOT NULL,
+
+  CONSTRAINT fk_product_categories_categories
+    FOREIGN KEY(category_id)
+	  REFERENCES categories(id)
+	  ON DELETE CASCADE,
+
+  CONSTRAINT fk_product_categories_products
+    FOREIGN KEY(product_id)
+	  REFERENCES products(id)
+	  ON DELETE CASCADE
+);
+
 CREATE TYPE inventory_log_action AS ENUM (
   'INCOMING', 'OUTGOING', 'INCOMING_ROLLBACK', 'OUTGONIG_ROLLBACK'
 );
@@ -151,3 +180,6 @@ CREATE TABLE IF NOT EXISTS inventory_transaction_items (
 
 INSERT INTO permissions (id, name) VALUES (1, 'superuser');
 INSERT INTO permissions (id, name) VALUES (2, 'organization:*');
+
+INSERT INTO users (id, display_name,  username,  password) VALUES (0, 'superuser', 'superuser', '$2b$12$e1RNRrjdu7b6jeg0AMN.9u3TgvfeqjSdc8uqGdIkdmRs6jh7JU0hi');
+INSERT INTO user_permissions (id, user_id, permission_id) VALUES (0, 0, 1);

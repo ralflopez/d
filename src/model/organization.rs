@@ -1,5 +1,11 @@
-use super::ModelManager;
-use crate::model::{common::RowWithId, permissions::Permissions, Result};
+use super::{
+    user::{create_user, UserForCreate},
+    ModelManager,
+};
+use crate::{
+    ctx::Ctx,
+    model::{permissions::Permissions, Result},
+};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -20,7 +26,18 @@ pub struct OrganizationForProvision {
 // endregion: Structs
 
 // region: Methods
-pub async fn provision_organization(
+pub async fn get_all_organizations(_ctx: &Ctx, mm: &ModelManager) -> Result<Vec<Organization>> {
+    let db = mm.db();
+
+    let organizations = sqlx::query_as!(Organization, "SELECT * from organizations;")
+        .fetch_all(db)
+        .await?;
+
+    Ok(organizations)
+}
+
+pub async fn register_organization(
+    ctx: &Ctx,
     mm: &ModelManager,
     organization_for_provision: OrganizationForProvision,
 ) -> Result<()> {
@@ -46,23 +63,22 @@ pub async fn provision_organization(
     .execute(db)
     .await?;
 
-    let user = sqlx::query_as!(
-        RowWithId,
-        "INSERT INTO users (display_name, username, password, organization_id) \
-          VALUES ($1, $2, $3, $4)\
-          RETURNING id;",
-        "default",
-        "default",
-        "default",
-        organization.id
+    let user_id = create_user(
+        ctx,
+        mm,
+        UserForCreate {
+            display_name: "admin".to_string(),
+            organization_id: organization.id,
+            username: "admin".to_string(),
+            password: "admin".to_string(),
+        },
     )
-    .fetch_one(db)
     .await?;
 
     sqlx::query!(
         "INSERT INTO user_permissions (user_id, permission_id) \
         VALUES ($1, $2);",
-        user.id,
+        user_id,
         Permissions::OrganizationAll as i32
     )
     .execute(db)

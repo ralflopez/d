@@ -1,6 +1,7 @@
 use super::enums::InventoryLogAction;
 use super::inventory_transaction::{DepositForCreateItem, SalesForCreateItem};
-use super::ModelManager;
+use super::{user, ModelManager};
+use crate::ctx::Ctx;
 use crate::model::common::RowWithId;
 use crate::model::enums::InventoryLogActions;
 use crate::model::error::Result;
@@ -42,12 +43,13 @@ impl From<SalesForCreateItem> for InventoryLogForCreate {
 
 // region: Methods
 pub async fn add_logs(
+    ctx: &Ctx,
     mm: &ModelManager,
     inventory_log_for_create: Vec<InventoryLogForCreate>,
 ) -> Result<Vec<i64>> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
 
     let quantities: Vec<_> = inventory_log_for_create
         .iter()

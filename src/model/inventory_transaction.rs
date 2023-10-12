@@ -1,9 +1,11 @@
+use crate::ctx::Ctx;
+
 use super::{
     common::RowWithId,
     enums::InventoryTransactionAction,
     inventory_log::{add_logs, InventoryLogForCreate},
     pageable::Pageable,
-    ModelManager, Result,
+    user, ModelManager, Result,
 };
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
@@ -46,12 +48,12 @@ pub struct SalesForCreate {
 
 // region: Methods
 pub async fn get_deposit_logs(
+    ctx: &Ctx,
     mm: &ModelManager,
     pageable: Pageable,
 ) -> Result<Vec<DepositLogForDbResult>> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
     let offset = pageable.offset();
     let page_size = pageable.size();
 
@@ -82,10 +84,13 @@ pub async fn get_deposit_logs(
     Ok(logs)
 }
 
-pub async fn add_deposit(mm: &ModelManager, deposit_for_create: DepositForCreate) -> Result<()> {
+pub async fn add_deposit(
+    ctx: &Ctx,
+    mm: &ModelManager,
+    deposit_for_create: DepositForCreate,
+) -> Result<()> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
 
     let items = deposit_for_create
         .items
@@ -93,7 +98,7 @@ pub async fn add_deposit(mm: &ModelManager, deposit_for_create: DepositForCreate
         .map(InventoryLogForCreate::from)
         .collect();
     let tx = db.begin().await?;
-    let log_ids = add_logs(mm, items).await?;
+    let log_ids = add_logs(ctx, mm, items).await?;
 
     let transaction = sqlx::query_as!(
         RowWithId,
@@ -120,10 +125,13 @@ pub async fn add_deposit(mm: &ModelManager, deposit_for_create: DepositForCreate
     Ok(())
 }
 
-pub async fn add_sales(mm: &ModelManager, sell_for_create: SalesForCreate) -> Result<()> {
+pub async fn add_sales(
+    ctx: &Ctx,
+    mm: &ModelManager,
+    sell_for_create: SalesForCreate,
+) -> Result<()> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
 
     let items: Vec<InventoryLogForCreate> = sell_for_create
         .items
@@ -132,7 +140,7 @@ pub async fn add_sales(mm: &ModelManager, sell_for_create: SalesForCreate) -> Re
         .collect();
 
     let tx = db.begin().await?;
-    let log_ids = add_logs(mm, items).await?;
+    let log_ids = add_logs(ctx, mm, items).await?;
 
     let transaction = sqlx::query_as!(
         RowWithId,

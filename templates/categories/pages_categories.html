@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <!-- <table id="categories-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th></th>
+      </tr>
+    </thead>
+    {% include "categories/fragments/table_entries.html" %}
+  </table> -->
+  <!-- Add Modal -->
+  <button class="btn btn-primary" onclick="my_modal_2.showModal()">open modal</button>
+  <dialog id="my_modal_2" class="modal">
+    <div class="modal-box">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+      </form>
+      <h3 class="font-bold text-lg">Add Category</h3>
+      <label class="label">
+        <span class="label-text">Name</span>
+      </label>
+      <form hx-post="/categories" hx-target="#categories-table tbody" hx-swap="outerHTML" hx-on::after-request="this.reset(); my_modal_2.close();">
+        <input name="name" type="text" placeholder="Name" class="input input-bordered w-full max-w-xs" />
+        <button type="submit" class="btn btn-primary btn-active">Add</button>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+  <!-- Table -->
+  <table id="categories-table" class="table table-zebra h-full">
+    <!-- head -->
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th></th>
+      </tr>
+    </thead>
+    {% include "categories/fragments/table_entries.html" %}
+  </table>
+
+  <template id="my-template">
+    <swal-title>
+      Save changes to "Untitled 1" before closing?
+    </swal-title>
+    <swal-icon type="warning" color="red"></swal-icon>
+    <swal-button type="confirm">
+      Save As
+    </swal-button>
+    <swal-button type="cancel">
+      Cancel
+    </swal-button>
+    <swal-button type="deny">
+      Close without Saving
+    </swal-button>
+    <swal-param name="allowEscapeKey" value="false" />
+    <swal-param
+      name="customClass"
+      value='{ "popup": "my-popup" }' />
+</template>
+<button data-swal-template="#my-template">
+  Trigger modal
+</button>
+
+{% endblock %}

@@ -8,6 +8,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize)]
 pub enum Error {
     Store(store::Error),
+    Unauhtorized(String),
     Sqlx(#[serde_as(as = "DisplayFromStr")] sqlx::Error),
 }
 

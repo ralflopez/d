@@ -13,3 +13,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_with = "3"
 chrono = { version = "0.4.31", features = ["serde"] }
+axum = "0.6.20"
+askama = "0.12.1"
+validator = { version = "0.16.1", features = ["derive"] }
+axum-valid = "0.10.0"
+bcrypt = "0.15.0"
+tower-cookies = "0.9.0"

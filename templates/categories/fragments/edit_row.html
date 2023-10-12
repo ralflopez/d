@@ -1,0 +1,13 @@
+<tr hx-trigger="cancel" hx-target="this" hx-swap="outerHTML" class="editing" hx-get="/categories/{{ category.id }}">
+  <td>
+    <input name="name" value="name" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td class="text-right">
+    <button class="btn" hx-get="/categories/{{ category.id }}" hx-target="closest tr" hx-swap="outerHTML">
+      Cancel
+    </button>
+    <button class="btn btn-primary" hx-put="/categories/{{ category.id }}" hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML">
+      Save
+    </button>
+  </td>
+</tr>

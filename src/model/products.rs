@@ -1,6 +1,8 @@
 use sqlx::types::BigDecimal;
 
-use super::{ModelManager, Result};
+use crate::ctx::Ctx;
+
+use super::{user, ModelManager, Result};
 
 // region: Structs
 #[derive(Debug)]
@@ -20,10 +22,12 @@ pub struct StockLevelForDbResult {
 // endregion: Structs
 
 // region: Methods
-pub async fn get_all_stock_levels(mm: &ModelManager) -> Result<Vec<ProductStockLevelForDbResult>> {
+pub async fn get_all_stock_levels(
+    ctx: &Ctx,
+    mm: &ModelManager,
+) -> Result<Vec<ProductStockLevelForDbResult>> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
 
     let products = sqlx::query_as!(
         ProductStockLevelForDbResult,
@@ -48,10 +52,9 @@ pub async fn get_all_stock_levels(mm: &ModelManager) -> Result<Vec<ProductStockL
     Ok(products)
 }
 
-pub async fn get_stock_level(mm: &ModelManager, product_id: i64) -> Result<i64> {
+pub async fn get_stock_level(ctx: &Ctx, mm: &ModelManager, product_id: i64) -> Result<i64> {
     let db = mm.db();
-    // TODO: get organization id from context
-    let organization_id: i64 = 1;
+    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
 
     let stock_level = sqlx::query_as!(
         StockLevelForDbResult,

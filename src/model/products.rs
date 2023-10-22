@@ -70,9 +70,6 @@ pub async fn get_stock_level(ctx: &Ctx, mm: &ModelManager, product_id: i64) -> R
     .fetch_one(db)
     .await?;
 
-    Ok(match stock_level.quantity {
-        Some(s) => s,
-        None => 0,
-    })
+    Ok(stock_level.quantity.unwrap_or(0))
 }
 // endregion: Methods

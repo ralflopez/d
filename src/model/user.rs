@@ -71,7 +71,7 @@ pub async fn verify_organization(
         .await?;
 
     match query_result.organization_id {
-        None => return Err(Error::Unauhtorized("Organization id not found".to_string())),
+        None => Err(Error::Unauhtorized("Organization id not found".to_string())),
         Some(result_id) => {
             if result_id != org_id {
                 return Err(Error::Unauhtorized("Invalid organization id".to_string()));

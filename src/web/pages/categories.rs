@@ -167,7 +167,7 @@ pub async fn update_category_row(
     )
     .await?;
 
-    let template = TableEntry { category: category };
+    let template = TableEntry { category };
     let reply_html = template.render().unwrap();
     Ok((
         StatusCode::OK,

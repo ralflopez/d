@@ -63,7 +63,7 @@ pub async fn add_logs(
     let prices: Vec<_> = inventory_log_for_create.iter().map(|i| i.price).collect();
     let organization_ids: Vec<_> = inventory_log_for_create
         .iter()
-        .map(|_i| organization_id.clone())
+        .map(|_i| organization_id)
         .collect();
     let warehouse_ids: Vec<_> = inventory_log_for_create
         .iter()

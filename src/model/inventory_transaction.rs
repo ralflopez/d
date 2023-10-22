@@ -109,8 +109,7 @@ pub async fn add_deposit(
     .fetch_one(db)
     .await?;
 
-    let transaction_ids_for_items: Vec<_> =
-        log_ids.iter().map(|_l| transaction.id.clone()).collect();
+    let transaction_ids_for_items: Vec<_> = log_ids.iter().map(|_l| transaction.id).collect();
     sqlx::query!(
         r#"INSERT INTO inventory_transaction_items (inventory_transaction_id, inventory_log_id)
         SELECT * FROM UNNEST($1::int8[], $2::int8[]);"#,
@@ -151,8 +150,7 @@ pub async fn add_sales(
     .fetch_one(db)
     .await?;
 
-    let transaction_ids_for_items: Vec<_> =
-        log_ids.iter().map(|_l| transaction.id.clone()).collect();
+    let transaction_ids_for_items: Vec<_> = log_ids.iter().map(|_l| transaction.id).collect();
     sqlx::query!(
         r#"INSERT INTO inventory_transaction_items (inventory_transaction_id, inventory_log_id)
         SELECT * FROM UNNEST($1::int8[], $2::int8[]);"#,

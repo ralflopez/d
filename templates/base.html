@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="cmyk">
+<html lang="en" data-theme="corporate">
   <head>
     <title>{% block title %}{{ title }} - My Site{% endblock %}</title>
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
@@ -14,7 +14,7 @@
   </head>
   <body class="w-full">
     <main id="content" class="w-full">
-      <div id="alert-container"></div>
+      <div id="toast-container"></div>
       {% block content %}<p>Placeholder content</p>{% endblock %}
     </main>
     {% block dialogs %}{% endblock %}

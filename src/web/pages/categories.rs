@@ -19,6 +19,7 @@ pub fn pages_cateogries(mm: ModelManager) -> Router {
         .route("/categories", post(create_category))
         .route("/categories/:id", get(get_category_row))
         .route("/categories/:id", delete(delete_category_row))
+        .route("/categories/:id/delete", get(delete_category_row_action))
         .route("/categories/:id/edit", put(update_category_row))
         .route("/categories/:id/edit", get(cancel_category_row))
         .with_state(mm)
@@ -124,6 +125,24 @@ pub async fn delete_category_row(
         ))
         .into_response(),
     ))
+}
+
+#[derive(Template)]
+#[template(path = "categories/fragments/delete_row_action.html")]
+pub struct DeleteRowAction {
+    pub category: Category,
+}
+pub async fn delete_category_row_action(
+    State(mm): State<ModelManager>,
+    Path(id): Path<i64>,
+) -> Result<impl IntoResponse> {
+    // Check authorization
+    let ctx = Ctx::new(1, 1);
+    let category = model::category::get_category_by_id(&ctx, &mm, id).await?;
+
+    let template = DeleteRowAction { category };
+    let reply_html = template.render().unwrap();
+    Ok((StatusCode::OK, Html(reply_html).into_response()))
 }
 
 #[derive(Deserialize)]

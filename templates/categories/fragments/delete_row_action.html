@@ -1,0 +1,13 @@
+<form id="delete-category-modal-action" hx-delete="/categories/{{ category.id }}" 
+            hx-target="#categories-table tbody" 
+            hx-swap="outerHTML"
+            hx-on::after-request="delete_category_modal.close();">
+    <div class="flex justify-end mt-4">
+        <button type="button" onclick="this.closest('.modal').close()" class="btn btn-active">
+            Cancel
+        </button>
+        <button type="submit" class="btn btn-error btn-active ml-2">
+            Delete
+        </button>
+    </div>
+</form>

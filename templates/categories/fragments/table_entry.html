@@ -12,41 +12,17 @@
                   hx-target="closest tr" 
                   hx-swap="outerHTML"
                   _="on click
-                        if .editing is not empty
-                          Swal.fire({title: 'Already Editing',
-                                    customClass: {
-                                      container: 'container-class',
-                                      popup: 'modal-box',
-                                      header: 'font-bold text-lg',
-                                      title: 'title-class',
-                                      closeButton: 'close-button-class',
-                                      icon: 'icon-class',
-                                      image: 'image-class',
-                                      content: 'content-class',
-                                      input: 'input-class',
-                                      actions: '',
-                                      confirmButton: 'sweetalert-confirmButton',
-                                      cancelButton: 'btn',
-                                      footer: 'footer-class'
-                                    },
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Yep, Edit This Row!',
-                                    text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})
-                          if the result's isConfirmed is false
-                            halt
-                          end
-                          send cancel to .editing
-                        end
+                        send cancel to .editing
                         trigger edit">
             Edit
           </button>
         </li>
         <li>
-          <button hx-delete="/categories/{{ category.id }}" 
-                  hx-target="#categories-table tbody" 
+          <button hx-get="/categories/{{ category.id }}/delete"
+                  hx-target="#delete-category-modal-action"
                   hx-swap="outerHTML"
                   class="btn-outline btn-error"
-                  hx-confirm="Are you sure?">
+                  hx-on::after-request="delete_category_modal.showModal()">
             Delete
           </button>
         </li>

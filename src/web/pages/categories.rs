@@ -20,8 +20,8 @@ pub fn pages_cateogries(mm: ModelManager) -> Router {
         .route("/categories/:id", get(get_category_row))
         .route("/categories/:id", delete(delete_category_row))
         .route("/categories/:id/delete", get(delete_category_row_action))
-        .route("/categories/:id/edit", put(update_category_row))
-        .route("/categories/:id/edit", get(cancel_category_row))
+        .route("/categories/:id", put(update_category_row))
+        .route("/categories/:id/edit", get(edit_category_row))
         .with_state(mm)
 }
 
@@ -179,7 +179,7 @@ pub async fn update_category_row(
     ))
 }
 
-pub async fn cancel_category_row(
+pub async fn edit_category_row(
     State(mm): State<ModelManager>,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse> {

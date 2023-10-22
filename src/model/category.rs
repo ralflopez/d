@@ -110,7 +110,10 @@ pub async fn search_category(
 
     let categories = sqlx::query_as!(
         Category,
-        r#"SELECT id, name FROM categories WHERE organization_id = $1 AND LOWER(name) LIKE $2"#,
+        r#"SELECT id, name FROM categories 
+           WHERE organization_id = $1 
+           AND LOWER(name) LIKE $2 
+           ORDER BY name;"#,
         organization_id,
         format!("{}%", search_string.to_lowercase())
     )

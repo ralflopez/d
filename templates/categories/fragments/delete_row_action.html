@@ -1,7 +1,9 @@
-<form id="delete-category-modal-action" hx-delete="/categories/{{ category.id }}" 
-            hx-target="#categories-table tbody" 
-            hx-swap="outerHTML"
-            hx-on::after-request="delete_category_modal.close();">
+<form id="delete-category-modal-action" 
+      hx-delete="/categories/{{ category.id }}" 
+      hx-target="#categories-table tbody" 
+      hx-swap="outerHTML"
+      hx-on::after-request="delete_category_modal.close();"
+      _="on htmx:afterRequest set #category-search.value to ''">
     <div class="flex justify-end mt-4">
         <button type="button" onclick="this.closest('.modal').close()" class="btn btn-active">
             Cancel

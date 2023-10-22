@@ -6,7 +6,8 @@
 <div class="m-4">
   <div class="flex mb-2">
     <div class="flex flex-1">
-      <input class="input input-bordered w-full max-w-xs mr-2" 
+      <input id="category-search"
+             class="input input-bordered w-full max-w-xs mr-2" 
              type="text"
              name="search"
              placeholder="Search"
@@ -51,7 +52,11 @@
     <label class="label">
       <span class="label-text">Name</span>
     </label>
-    <form hx-post="/categories" hx-target="#categories-table tbody" hx-swap="outerHTML" hx-on::after-request="this.reset(); add_category_modal.close();">
+    <form hx-post="/categories" 
+          hx-target="#categories-table tbody" 
+          hx-swap="outerHTML" 
+          hx-on::after-request="this.reset(); add_category_modal.close();"
+          _="on htmx:afterRequest set #category-search.value to ''">
       <input name="name" type="text" placeholder="Name" class="input input-bordered w-full" />
       <div class="flex justify-end mt-4">
         <button type="submit" class="btn btn btn-active">Cancel</button>

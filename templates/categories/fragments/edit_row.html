@@ -3,7 +3,7 @@
     <input name="name" value="{{ category.name }}" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" />
   </td>
   <td class="text-right">
-    <button class="btn" hx-get="/categories/{{ category.id }}" hx-target="closest tr" hx-swap="outerHTML">
+    <button class="btn" hx-get="/categories/{{ category.id }}" hx-target="closest tr" hx-swap="outerHTML" _="on click remove @disabled from #category-search">
       Cancel
     </button>
     <button class="btn btn-primary" hx-put="/categories/{{ category.id }}" hx-include="closest tr" hx-target="closest tr" hx-swap="outerHTML">

@@ -99,6 +99,26 @@ pub async fn update_category(
 
     Ok(category)
 }
+
+pub async fn search_category(
+    ctx: &Ctx,
+    mm: &ModelManager,
+    search_string: String,
+) -> Result<Vec<Category>> {
+    let db = mm.db();
+    let (_, organization_id) = get_user_ids(ctx, mm).await?;
+
+    let categories = sqlx::query_as!(
+        Category,
+        r#"SELECT id, name FROM categories WHERE organization_id = $1 AND LOWER(name) LIKE $2"#,
+        organization_id,
+        format!("{}%", search_string.to_lowercase())
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(categories)
+}
 // endregion: Methods
 
 // Cases

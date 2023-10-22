@@ -6,7 +6,14 @@
 <div class="m-4">
   <div class="flex mb-2">
     <div class="flex flex-1">
-      <input type="text" placeholder="Search" class="input input-bordered w-full max-w-xs mr-2" />
+      <input class="input input-bordered w-full max-w-xs mr-2" 
+             type="text"
+             name="search"
+             placeholder="Search"
+             hx-post="/categories/search"
+             hx-trigger="keyup changed delay:500ms, search"
+             hx-target="#categories-table tbody"
+             hx-swap="outerHTML">
     </div>
     <button class="btn btn-primary" onclick="add_category_modal.showModal()">New Category</button>
   </div>

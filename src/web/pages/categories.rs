@@ -4,7 +4,7 @@ use crate::model::category::{get_all_categories, get_category_by_id, Category};
 use crate::model::ModelManager;
 use crate::web::error::Result;
 use askama::Template;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post, put};
@@ -22,6 +22,7 @@ pub fn pages_cateogries(mm: ModelManager) -> Router {
         .route("/categories/:id/delete", get(delete_category_row_action))
         .route("/categories/:id", put(update_category_row))
         .route("/categories/:id/edit", get(edit_category_row))
+        .route("/categories/search", post(search_category))
         .with_state(mm)
 }
 
@@ -189,6 +190,25 @@ pub async fn edit_category_row(
     let category = get_category_by_id(&ctx, &mm, id).await?;
 
     let template = EditRowFragment { category };
+    let reply_html = template.render().unwrap();
+    Ok((StatusCode::OK, Html(reply_html).into_response()))
+}
+
+#[derive(Deserialize)]
+pub struct CategoryForSearch {
+    search: String,
+}
+pub async fn search_category(
+    State(mm): State<ModelManager>,
+    Form(category_for_search): Form<CategoryForSearch>,
+) -> Result<impl IntoResponse> {
+    // Check authorization
+    let ctx = Ctx::new(1, 1);
+
+    let categories =
+        model::category::search_category(&ctx, &mm, category_for_search.search).await?;
+
+    let template = TableEntries { categories };
     let reply_html = template.render().unwrap();
     Ok((StatusCode::OK, Html(reply_html).into_response()))
 }

@@ -4,14 +4,14 @@ use crate::model::category::{get_all_categories, get_category_by_id, Category};
 use crate::model::ModelManager;
 use crate::web::error::Result;
 use askama::Template;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post, put};
 use axum::{Form, Router};
 use serde::Deserialize;
 
-use super::toasts::{self, with_toast_response, ToastSeverity, ToastSuccessTemplate};
+use super::toasts::{with_toast_response, ToastSeverity};
 
 pub fn pages_cateogries(mm: ModelManager) -> Router {
     Router::new()

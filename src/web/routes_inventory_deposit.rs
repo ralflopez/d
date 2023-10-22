@@ -5,7 +5,6 @@ use super::error::Result;
 use axum::extract::State;
 use axum::routing::post;
 use axum::{Json, Router};
-use axum_valid::Valid;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use validator::Validate;

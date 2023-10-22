@@ -1,8 +1,6 @@
-use sqlx::types::BigDecimal;
-
-use crate::ctx::Ctx;
-
 use super::{user, ModelManager, Result};
+use crate::ctx::Ctx;
+use sqlx::types::BigDecimal;
 
 // region: Structs
 #[derive(Debug)]

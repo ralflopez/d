@@ -7,14 +7,9 @@ mod web;
 use std::net::SocketAddr;
 
 use self::error::Result;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::Router;
 use crypt::hash_value;
-use model::{
-    inventory_transaction::{DepositForCreate, DepositForCreateItem},
-    pageable::Pageable,
-    ModelManager,
-};
-use serde_json::{json, Value};
+use model::ModelManager;
 use web::{
     page_test::page_test_route, pages::categories::pages_cateogries,
     routes_inventory_deposit::routes_inventory_deposit, routes_test::test_routes,
@@ -23,7 +18,6 @@ use web::{
 #[tokio::main]
 async fn main() -> Result<()> {
     let mm = ModelManager::new().await?;
-    let ctx = ctx::Ctx::empty();
 
     // model::organization::provision_organization(
     //     &mm,

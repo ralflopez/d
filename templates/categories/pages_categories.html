@@ -4,10 +4,11 @@
 
 {% block content %}
 <div class="m-4">
-  <div class="flex mb-2">
-    <div class="flex flex-1">
+  <h1 class="font-medium text-3xl hidden md:block mb-4">Categories</h1>
+  <div class="flex flex-col md:flex-row mb-2">
+    <div class="flex flex-1 order-2 md:order-1 w-full">
       <input id="category-search"
-             class="input input-bordered w-full max-w-xs mr-2" 
+             class="input input-bordered w-full md:mr-2 md:max-w-md" 
              type="text"
              name="search"
              placeholder="Search"
@@ -16,19 +17,24 @@
              hx-target="#categories-table tbody"
              hx-swap="outerHTML">
     </div>
-    <button class="btn btn-primary" onclick="add_category_modal.showModal()">New Category</button>
+    <div class="flex justify-between items-center mb-2 md:mb-0 order-1 md:order-2">
+      <h1 class="font-medium text-2xl md:hidden">Categories</h1>
+      <button class="btn btn-primary" onclick="add_category_modal.showModal()">New Category</button>
+    </div>
   </div>
   <!-- Table -->
-  <table id="categories-table" class="table table-zebra h-full">
-    <!-- head -->
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th></th>
-      </tr>
-    </thead>
-    {% include "categories/fragments/table_entries.html" %}
-  </table>
+  <div id="table-container" class="overflow-x-auto overflow-y-hidden pb-24">
+    <table id="categories-table" class="table table-zebra">
+      <!-- head -->
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th></th>
+        </tr>
+      </thead>
+      {% include "categories/fragments/table_entries.html" %}
+    </table>
+  </div>
 </div>
 {% endblock %}
 

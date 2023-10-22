@@ -1,55 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Index{% endblock %}
-
-{% block head %}
-<style>
-
-</style>
-{% endblock %}
+{% block title %}Category{% endblock %}
 
 {% block content %}
-
-  <!-- <table id="categories-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th></th>
-      </tr>
-    </thead>
-    {% include "categories/fragments/table_entries.html" %}
-  </table> -->
-  <!-- Delete Modal -->
-  <dialog id="delete_category_modal" class="modal">
-    <div class="modal-box">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onclick="this.closest('.modal').close()">✕</button>
-      <h3 class="font-bold text-lg">Are you sure?</h3>
-      <form id="delete-category-modal-action"></form>
-    </div>
-    <div class="modal-backdrop">
-      <button onclick="this.closest('.modal').close()">close</button>
-    </div>
-  </dialog>
-  <!-- Add Modal -->
-  <button class="btn btn-primary" onclick="my_modal_2.showModal()">New Category</button>
-  <dialog id="my_modal_2" class="modal">
-    <div class="modal-box">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onclick="my_modal_2.close()">✕</button>
-      <h3 class="font-bold text-lg">Add Category</h3>
-      <label class="label">
-        <span class="label-text">Name</span>
-      </label>
-      <form hx-post="/categories" hx-target="#categories-table tbody" hx-swap="outerHTML" hx-on::after-request="this.reset(); my_modal_2.close();">
-        <input name="name" type="text" placeholder="Name" class="input input-bordered w-full" />
-        <div class="flex justify-end mt-4">
-          <button type="submit" class="btn btn-primary btn-active">Add</button>
-        </div>
-      </form>
-    </div>
-    <div class="modal-backdrop">
-      <button onclick="my_modal_2.close()">close</button>
-    </div>
-  </dialog>
+  <button class="btn btn-primary" onclick="add_category_modal.showModal()">New Category</button>
   <!-- Table -->
   <table id="categories-table" class="table table-zebra h-full">
     <!-- head -->
@@ -61,5 +15,38 @@
     </thead>
     {% include "categories/fragments/table_entries.html" %}
   </table>
+{% endblock %}
 
+{% block dialogs %}
+<!-- Delete Modal -->
+<dialog id="delete_category_modal" class="modal">
+  <div class="modal-box">
+    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onclick="this.closest('.modal').close()">✕</button>
+    <h3 class="font-bold text-lg">Are you sure?</h3>
+    <form id="delete-category-modal-action"></form>
+  </div>
+  <div class="modal-backdrop">
+    <button onclick="this.closest('.modal').close()">close</button>
+  </div>
+</dialog>
+<!-- Add Modal -->
+<dialog id="add_category_modal" class="modal">
+  <div class="modal-box">
+    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onclick="add_category_modal.close()">✕</button>
+    <h3 class="font-bold text-lg">Add Category</h3>
+    <label class="label">
+      <span class="label-text">Name</span>
+    </label>
+    <form hx-post="/categories" hx-target="#categories-table tbody" hx-swap="outerHTML" hx-on::after-request="this.reset(); add_category_modal.close();">
+      <input name="name" type="text" placeholder="Name" class="input input-bordered w-full" />
+      <div class="flex justify-end mt-4">
+        <button type="submit" class="btn btn btn-active">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-active ml-2">Add</button>
+      </div>
+    </form>
+  </div>
+  <div class="modal-backdrop">
+    <button onclick="add_category_modal.close()">close</button>
+  </div>
+</dialog>
 {% endblock %}

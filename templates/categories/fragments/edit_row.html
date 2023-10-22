@@ -1,6 +1,6 @@
 <tr hx-trigger="cancel" hx-target="this" hx-swap="outerHTML" class="editing" hx-get="/categories/{{ category.id }}">
   <td>
-    <input name="name" value="name" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" />
+    <input name="name" value="{{ category.name }}" type="text" placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs" />
   </td>
   <td class="text-right">
     <button class="btn" hx-get="/categories/{{ category.id }}" hx-target="closest tr" hx-swap="outerHTML">

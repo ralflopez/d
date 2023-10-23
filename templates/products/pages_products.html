@@ -1,0 +1,150 @@
+{% extends "base.html" %} {% block title %}Products{% endblock %} {% block
+content %}
+<div class="m-4">
+  <h1 class="font-medium text-3xl hidden md:block mb-4">Products</h1>
+  <div class="flex flex-col md:flex-row mb-2">
+    <div class="flex flex-1 order-2 md:order-1 w-full">
+      <form class="flex w-full"
+            hx-trigger="searchproducts" 
+            hx-post="/products/search"
+            hx-target="#products-table tbody"
+            hx-swap="outerHTML">
+        <input id="product-search"
+               name="search"
+               class="product-search-item flex-1 input input-bordered w-full mr-2 md:max-w-md"
+               type="text"
+               placeholder="Search Products"
+               _="on keyup debounced at 500ms trigger searchproducts"/>
+        <select name="by" class="product-search-item select select-bordered w-xs">
+          <option value="full_name" selected>Full Name</option>
+          <option value="sku">SKU</option>
+          <option value="sku">Brand</option>
+          <option value="sku">Name</option>
+        </select>
+      </form>
+    </div>
+    <div
+      class="flex justify-between items-center mb-2 md:mb-0 order-1 md:order-2"
+    >
+      <h1 class="font-medium text-2xl md:hidden">Products</h1>
+      <button class="btn btn-primary" onclick="add_product_modal.showModal()">
+        New Product
+      </button>
+    </div>
+  </div>
+  <!-- Table -->
+  <div id="table-container" class="overflow-x-auto overflow-y-hidden pb-24">
+    <table id="products-table" class="table table-zebra">
+      <!-- head -->
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Brand</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th></th>
+        </tr>
+      </thead>
+      {% include "products/fragments/table_entries.html" %}
+    </table>
+  </div>
+</div>
+{% endblock %} {% block dialogs %}
+<!-- Delete Modal -->
+<dialog id="delete_product_modal" class="modal">
+  <div class="modal-box">
+    <button
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      onclick="this.closest('.modal').close()"
+    >
+      ✕
+    </button>
+    <h3 class="font-bold text-lg">Are you sure?</h3>
+    <form id="delete-product-modal-action"></form>
+  </div>
+  <div class="modal-backdrop">
+    <button onclick="this.closest('.modal').close()">close</button>
+  </div>
+</dialog>
+<!-- Add Modal -->
+<dialog id="add_product_modal" class="modal">
+  <div class="modal-box">
+    <button
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      onclick="add_product_modal.close()"
+    >
+      ✕
+    </button>
+    <h3 class="font-bold text-lg">Add Product</h3>
+    <form
+      hx-post="/products"
+      hx-target="#products-table tbody"
+      hx-swap="outerHTML"
+      hx-on::after-request="this.reset(); add_product_modal.close();"
+      _="on htmx:afterRequest set #product-search.value to ''"
+    >
+      <label for="add-product-sku" class="label">
+        <span class="label-text">SKU</span>
+      </label>
+      <input
+        id="add-product-sku"
+        name="sku"
+        type="text"
+        placeholder="SKU"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-brand" class="label">
+        <span class="label-text">Brand</span>
+      </label>
+      <input
+        id="add-product-brand"
+        name="brand"
+        type="text"
+        placeholder="Brand"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-name" class="label">
+        <span class="label-text">Name</span>
+      </label>
+      <input
+        id="add-product-name"
+        name="name"
+        type="text"
+        placeholder="Name"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-description" class="label">
+        <span class="label-text">Description</span>
+      </label>
+      <input
+        id="add-product-description"
+        name="description"
+        type="text"
+        placeholder="Description"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-price" class="label">
+        <span class="label-text">Price</span>
+      </label>
+      <input
+        id="add-product-price"
+        name="price"
+        type="number"
+        placeholder="Price"
+        class="input input-bordered w-full"
+      />
+      <div class="flex justify-end mt-4">
+        <button type="submit" class="btn btn btn-active">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-active ml-2">
+          Add
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="modal-backdrop">
+    <button onclick="add_product_modal.close()">close</button>
+  </div>
+</dialog>
+{% endblock %}

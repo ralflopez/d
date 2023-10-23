@@ -1,0 +1,15 @@
+<form id="delete-product-modal-action" 
+      hx-delete="/products/{{ product.id }}" 
+      hx-target="#products-table tbody" 
+      hx-swap="outerHTML"
+      hx-on::after-request="delete_product_modal.close();"
+      _="on htmx:afterRequest set #product-search.value to ''">
+    <div class="flex justify-end mt-4">
+        <button type="button" onclick="this.closest('.modal').close()" class="btn btn-active">
+            Cancel
+        </button>
+        <button type="submit" class="btn btn-error btn-active ml-2">
+            Delete
+        </button>
+    </div>
+</form>

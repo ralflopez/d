@@ -12,7 +12,8 @@ use crypt::hash_value;
 use model::ModelManager;
 use web::{
     page_test::page_test_route, pages::categories::pages_cateogries,
-    routes_inventory_deposit::routes_inventory_deposit, routes_test::test_routes,
+    pages::products::pages_products, routes_inventory_deposit::routes_inventory_deposit,
+    routes_test::test_routes,
 };
 
 #[tokio::main]
@@ -68,6 +69,7 @@ async fn main() -> Result<()> {
 
     let routes_all = Router::new()
         .merge(pages_cateogries(mm.clone()))
+        .merge(pages_products(mm.clone()))
         .merge(test_routes(mm.clone()))
         .merge(page_test_route(mm.clone()))
         .merge(routes_inventory_deposit(mm.clone()));

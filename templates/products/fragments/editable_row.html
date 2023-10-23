@@ -1,0 +1,67 @@
+<tr hx-trigger="cancel"
+    hx-target="this"
+    hx-swap="outerHTML"
+    class="editing"
+    hx-get="/products/{{ product.id }}">
+  <td>
+    <input name="sku"
+           value="{{ product.sku }}"
+           type="text"
+           placeholder="SKU"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td>
+    <input name="brand"
+           value="{{ product.brand }}"
+           type="text"
+           placeholder="Brand"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td>
+    <input name="name"
+           value="{{ product.name }}"
+           type="text"
+           placeholder="Name"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td>
+    <input name="description"
+           value="{{ product.description }}"
+           type="text"
+           placeholder="Description"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td>
+    <input name="price"
+           value="{{ product.price }}"
+           type="number"
+           placeholder="Price"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td>
+    <input value="{{ product.quantity }}"
+           type="number"
+           disabled
+           placeholder="Quantity"
+           class="input input-bordered input-primary w-full max-w-xs" />
+  </td>
+  <td class="flex justify-end">
+    <button class="btn mr-2"
+            hx-get="/products/{{ product.id }}"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            _="on click
+                remove @disabled from .product-search-item">
+      Cancel
+    </button>
+    <button class="btn btn-primary"
+            hx-put="/products/{{ product.id }}"
+            hx-include="closest tr"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            _="on htmx:afterRequest
+                remove @disabled from .product-search-item">
+      Save
+    </button>
+  </td>
+</tr>

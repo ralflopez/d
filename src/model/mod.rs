@@ -1,6 +1,5 @@
 pub mod category;
 mod common;
-pub mod enums;
 mod error;
 pub mod inventory_log;
 pub mod inventory_transaction;

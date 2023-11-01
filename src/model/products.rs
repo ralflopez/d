@@ -327,7 +327,7 @@ pub async fn search_products(
                 LEFT JOIN inventory_logs il
                 ON p.id = il.product_id
                 WHERE p.organization_id = $1
-                AND p.display_name LIKE $2
+                AND p.name LIKE $2
                 GROUP BY p.id, p.sku, p.brand, p.name, p.description, p.display_name, p.price
                 ORDER BY p.display_name;"#,
                 organization_id,

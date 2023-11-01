@@ -1,166 +1,282 @@
-use crate::ctx::Ctx;
+use std::collections::HashMap;
 
 use super::{
-    common::RowWithId,
-    enums::InventoryTransactionAction,
-    inventory_log::{add_logs, InventoryLogForCreate},
+    inventory_log::{self, InventoryLog, InventoryLogAction, InventoryLogForCreate},
     pageable::Pageable,
-    user, ModelManager, Result,
+    user::get_user_ids,
+    ModelManager,
 };
+use crate::model::error::Result;
+use crate::{ctx::Ctx, model::inventory_log::InventoryLogActions};
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 
-// region: Structs
-#[derive(Debug)]
-pub struct DepositLogForDbResult {
-    pub id: i64,
-    pub purchase_price: BigDecimal,
+// https://github.com/launchbadge/sqlx/issues/1004#issuecomment-854662251
+#[derive(sqlx::Type, Debug, Clone)]
+#[sqlx(
+    type_name = "inventory_transaction_action",
+    rename_all = "SCREAMING_SNAKE_CASE"
+)]
+pub enum InventoryTransactionAction {
+    Sales,
+    Deposit,
+    SalesRollback,
+    DepositRollback,
+}
+
+pub struct InventoryTransaction {
+    id: i64,
+    timestamp: DateTime<Utc>,
+    action: InventoryTransactionAction,
+    logs: Vec<InventoryLog>,
+}
+
+// region: Create
+// region:      Shared
+pub struct InventoryTransactionLogForCreate {
+    pub quantity: i64,
+    pub product_id: i64,
+    pub price: f64,
     pub warehouse_id: i64,
-    // https://stackoverflow.com/questions/73626570/trait-bound-chronodatetimeutc-fromsqldieselsql-typesnullablediesel
-    pub timestamp: Option<DateTime<Utc>>,
+}
+
+pub struct InventoryTransactionForCreate {
     pub action: InventoryTransactionAction,
-    pub sku: String,
-    pub display_name: String,
+    pub logs: Vec<InventoryLogForCreate>,
 }
 
-pub struct DepositForCreateItem {
-    pub quantity: i64,
-    pub product_id: i64,
-    pub price: f64,
-    pub warehouse_id: i64,
+impl InventoryTransactionForCreate {
+    pub fn new(action: InventoryTransactionAction) -> Self {
+        Self {
+            action,
+            logs: Vec::new(),
+        }
+    }
+
+    pub fn add_log(&mut self, log: InventoryTransactionLogForCreate) -> () {
+        let InventoryTransactionLogForCreate {
+            price,
+            product_id,
+            quantity,
+            warehouse_id,
+        } = log;
+
+        let new_log = match self.action {
+            InventoryTransactionAction::Deposit => InventoryLogForCreate {
+                quantity,
+                product_id,
+                action: InventoryLogAction::Incoming,
+                price,
+                warehouse_id,
+            },
+            InventoryTransactionAction::DepositRollback => InventoryLogForCreate {
+                quantity,
+                product_id,
+                action: InventoryLogAction::Outgoing,
+                price,
+                warehouse_id,
+            },
+            InventoryTransactionAction::Sales => InventoryLogForCreate {
+                quantity,
+                product_id,
+                action: InventoryLogAction::Outgoing,
+                price,
+                warehouse_id,
+            },
+            InventoryTransactionAction::SalesRollback => InventoryLogForCreate {
+                quantity,
+                product_id,
+                action: InventoryLogAction::Incoming,
+                price,
+                warehouse_id,
+            },
+        };
+
+        self.logs.push(new_log);
+    }
+
+    pub async fn save(self, ctx: &Ctx, mm: &ModelManager) -> Result<()> {
+        create_inventory_transaction(ctx, mm, self).await
+    }
 }
 
-pub struct DepositForCreate {
-    pub items: Vec<DepositForCreateItem>,
+async fn create_inventory_transaction(
+    ctx: &Ctx,
+    mm: &ModelManager,
+    transaction_for_create: InventoryTransactionForCreate,
+) -> Result<()> {
+    let db = mm.db();
+    let (_, organization_id) = get_user_ids(ctx, mm).await?;
+
+    let transaction = sqlx::query!(
+        r#"INSERT INTO inventory_transactions (action, organization_id) 
+        VALUES ($1, $2) 
+        RETURNING id;"#,
+        transaction_for_create.action as InventoryTransactionAction,
+        organization_id
+    )
+    .fetch_one(db)
+    .await?;
+
+    let quantities: Vec<_> = transaction_for_create
+        .logs
+        .iter()
+        .map(|l| l.quantity)
+        .collect();
+
+    let product_ids: Vec<_> = transaction_for_create
+        .logs
+        .iter()
+        .map(|l| l.product_id)
+        .collect();
+
+    let actions: Vec<_> = transaction_for_create
+        .logs
+        .iter()
+        .map(|l| l.action)
+        .collect();
+
+    let prices: Vec<_> = transaction_for_create
+        .logs
+        .iter()
+        .map(|l| l.price)
+        .collect();
+
+    let organization_ids = vec![organization_id; transaction_for_create.logs.len()];
+    let transaction_ids = vec![transaction.id; transaction_for_create.logs.len()];
+
+    let warehouse_ids: Vec<_> = transaction_for_create
+        .logs
+        .iter()
+        .map(|l| l.warehouse_id)
+        .collect();
+
+    sqlx::query!(
+        r#"INSERT INTO inventory_logs (quantity, product_id, action, price, organization_id, warehouse_id, inventory_transaction_id)
+        SELECT * FROM UNNEST($1::int8[], $2::int8[], $3::inventory_log_action[], $4::float8[], $5::int8[], $6::int8[], $7::int8[]);"#,
+        &quantities,
+        &product_ids,
+        InventoryLogActions(&actions) as _,
+        &prices,
+        &organization_ids,
+        &warehouse_ids,
+        &transaction_ids
+    ).execute_many(db)
+    .await;
+
+    Ok(())
+}
+// endregion:       Shared
+// endregion: Create
+
+// region: Read
+#[derive(sqlx::FromRow)]
+pub struct InventoryLogsWithTransactionAndProductForDbRow {
+    inventory_transaction_id: i64,
+    inventory_transaction_timestamp: DateTime<Utc>,
+    inventory_transaction_action: InventoryTransactionAction,
+
+    inventory_log_id: i64,
+    inventory_log_quantity: i64,
+    inventory_log_product_id: i64,
+    inventory_log_action: InventoryLogAction,
+    inventory_log_timestamp: DateTime<Utc>,
+    inventory_log_price: BigDecimal,
+    inventory_log_warehouse_id: i64,
+    inventory_log_transaction_id: Option<i64>,
+
+    product_sku: String,
+    product_brand: String,
+    product_name: String,
+    product_display_name: String,
+    product_description: String,
+    product_price: BigDecimal,
 }
 
-pub struct SalesForCreateItem {
-    pub quantity: i64,
-    pub product_id: i64,
-    pub price: f64,
-    pub warehouse_id: i64,
-}
-
-pub struct SalesForCreate {
-    pub items: Vec<SalesForCreateItem>,
-}
-// endregion: Structs
-
-// region: Methods
-pub async fn get_deposit_logs(
+// region:  Deposit
+pub async fn get_all_deposit_transactions(
     ctx: &Ctx,
     mm: &ModelManager,
     pageable: Pageable,
-) -> Result<Vec<DepositLogForDbResult>> {
+) -> Result<Vec<InventoryTransaction>> {
     let db = mm.db();
-    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
-    let offset = pageable.offset();
-    let page_size = pageable.size();
+    let (_, organization_id) = get_user_ids(ctx, mm).await?;
 
-    let logs = sqlx::query_as!(
-        DepositLogForDbResult,
+    let deposits = sqlx::query_as!(
+        InventoryLogsWithTransactionAndProductForDbRow,
         r#"SELECT
-            it.id as id,
-            il.price as purchase_price,
-            il.warehouse_id,
-            it.timestamp as timestamp,
-            it.action as "action: InventoryTransactionAction",
-            p.sku as sku,
-            p.display_name as display_name
-        FROM inventory_transaction_items iti
-        INNER JOIN inventory_logs il ON iti.inventory_log_id = il.id
-        INNER JOIN inventory_transactions it ON iti.inventory_transaction_id = it.id
-        INNER JOIN products p ON il.product_id = p.id
-        WHERE it.organization_id = $1
-        AND it.action = 'DEPOSIT'
-        OFFSET $2 LIMIT $3;"#,
+            it.id as inventory_transaction_id,
+            it.timestamp as inventory_transaction_timestamp,
+            it.action as "inventory_transaction_action: InventoryTransactionAction",
+            
+            il.id as inventory_log_id,
+            il.quantity as inventory_log_quantity,
+            il.product_id as inventory_log_product_id,
+            il.action as "inventory_log_action: InventoryLogAction",
+            il.timestamp as inventory_log_timestamp,
+            il.price as inventory_log_price,
+            il.warehouse_id as inventory_log_warehouse_id,
+            il.inventory_transaction_id as inventory_log_transaction_id,
+
+            p.sku as product_sku,
+            p.brand as product_brand,
+            p.name as product_name,
+            p.display_name as product_display_name,
+            p.description as product_description,
+            p.price as product_price
+        FROM inventory_logs il
+        INNER JOIN inventory_transactions it
+        ON il.inventory_transaction_id = it.id
+        JOIN products p
+        ON il.product_id = p.id
+        WHERE
+            it.organization_id = $1
+        AND
+            it.action = $2
+        OFFSET $3
+        LIMIT $4;"#,
         organization_id,
-        offset,
-        page_size
+        InventoryTransactionAction::Deposit as InventoryTransactionAction,
+        pageable.offset(),
+        pageable.size()
     )
     .fetch_all(db)
     .await?;
 
-    Ok(logs)
+    // fold
+    let inventory_transactions: HashMap<i64, InventoryTransaction> =
+        deposits.iter().fold(HashMap::new(), |mut acc, val| {
+            acc.insert(
+                val.inventory_transaction_id,
+                InventoryTransaction {
+                    id: val.inventory_transaction_id,
+                    timestamp: val.inventory_transaction_timestamp,
+                    action: val.inventory_transaction_action.to_owned(),
+                    logs: Vec::new(),
+                },
+            );
+
+            let key = val.inventory_log_transaction_id.unwrap_or(-1);
+            let value = acc.get_mut(&key);
+            value.map(|v| {
+                v.logs.push(InventoryLog {
+                    id: val.inventory_log_id,
+                    quantity: val.inventory_log_quantity,
+                    product_id: val.inventory_log_product_id,
+                    product_display_name: val.product_display_name.to_owned(),
+                    action: val.inventory_log_action,
+                    timestamp: val.inventory_log_timestamp,
+                    price: val.inventory_log_price.to_owned(),
+                    warehouse_id: val.inventory_log_warehouse_id,
+                    transaction_id: val.inventory_log_transaction_id,
+                })
+            });
+
+            acc
+        });
+
+    let values: Vec<InventoryTransaction> = inventory_transactions.into_values().collect();
+    Ok(values)
 }
-
-pub async fn add_deposit(
-    ctx: &Ctx,
-    mm: &ModelManager,
-    deposit_for_create: DepositForCreate,
-) -> Result<()> {
-    let db = mm.db();
-    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
-
-    let items = deposit_for_create
-        .items
-        .into_iter()
-        .map(InventoryLogForCreate::from)
-        .collect();
-    let tx = db.begin().await?;
-    let log_ids = add_logs(ctx, mm, items).await?;
-
-    let transaction = sqlx::query_as!(
-        RowWithId,
-        r#"INSERT INTO inventory_transactions (organization_id, action) VALUES ($1, $2) RETURNING id;"#,
-        organization_id,
-        InventoryTransactionAction::Deposit as InventoryTransactionAction
-    )
-    .fetch_one(db)
-    .await?;
-
-    let transaction_ids_for_items: Vec<_> = log_ids.iter().map(|_l| transaction.id).collect();
-    sqlx::query!(
-        r#"INSERT INTO inventory_transaction_items (inventory_transaction_id, inventory_log_id)
-        SELECT * FROM UNNEST($1::int8[], $2::int8[]);"#,
-        &log_ids,
-        &transaction_ids_for_items
-    )
-    .execute(db)
-    .await?;
-
-    tx.commit().await?;
-
-    Ok(())
-}
-
-pub async fn add_sales(
-    ctx: &Ctx,
-    mm: &ModelManager,
-    sell_for_create: SalesForCreate,
-) -> Result<()> {
-    let db = mm.db();
-    let (_, organization_id) = user::get_user_ids(ctx, mm).await?;
-
-    let items: Vec<InventoryLogForCreate> = sell_for_create
-        .items
-        .into_iter()
-        .map(InventoryLogForCreate::from)
-        .collect();
-
-    let tx = db.begin().await?;
-    let log_ids = add_logs(ctx, mm, items).await?;
-
-    let transaction = sqlx::query_as!(
-        RowWithId,
-        r#"INSERT INTO inventory_transactions (organization_id, action) VALUES ($1, $2) RETURNING id;"#,
-        organization_id,
-        InventoryTransactionAction::Sales as InventoryTransactionAction
-    )
-    .fetch_one(db)
-    .await?;
-
-    let transaction_ids_for_items: Vec<_> = log_ids.iter().map(|_l| transaction.id).collect();
-    sqlx::query!(
-        r#"INSERT INTO inventory_transaction_items (inventory_transaction_id, inventory_log_id)
-        SELECT * FROM UNNEST($1::int8[], $2::int8[]);"#,
-        &log_ids,
-        &transaction_ids_for_items
-    )
-    .execute(db)
-    .await?;
-
-    tx.commit().await?;
-    Ok(())
-}
-// endregion: Methods
+// endregion:   Deposit
+// endregion: Read

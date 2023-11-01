@@ -1,6 +1,5 @@
-DROP TABLE IF EXISTS inventory_transaction_items;
-DROP TABLE IF EXISTS inventory_transactions;
 DROP TABLE IF EXISTS inventory_logs;
+DROP TABLE IF EXISTS inventory_transactions;
 DROP TABLE IF EXISTS product_categories;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS products;
@@ -116,8 +115,24 @@ CREATE TABLE IF NOT EXISTS product_categories (
 	  ON DELETE CASCADE
 );
 
+CREATE TYPE inventory_transaction_action AS ENUM (
+  'SALES', 'DEPOSIT', 'SALES_ROLLBACK', 'DEPOSIT_ROLLBACK'
+);
+
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  organization_id BIGINT NOT NULL,
+  action inventory_transaction_action NOT NULL,
+
+  CONSTRAINT fk_inventory_transactions_organizations
+      FOREIGN KEY(organization_id)
+  	  REFERENCES organizations(id)
+  	  ON DELETE CASCADE
+);
+
 CREATE TYPE inventory_log_action AS ENUM (
-  'INCOMING', 'OUTGOING', 'INCOMING_ROLLBACK', 'OUTGONIG_ROLLBACK'
+  'INCOMING', 'OUTGOING'
 );
 
 CREATE TABLE IF NOT EXISTS inventory_logs (
@@ -125,10 +140,11 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
   quantity INTEGER NOT NULL,
   product_id BIGINT NOT NULL,
   action inventory_log_action NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   price NUMERIC NOT NULL,
   organization_id BIGINT NOT NULL,
   warehouse_id BIGINT NOT NULL,
+  inventory_transaction_id BIGINT,
 
   CONSTRAINT fk_inventory_log_organizations
     FOREIGN KEY(organization_id)
@@ -140,42 +156,14 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
 	  REFERENCES products(id)
 	  ON DELETE CASCADE,
 
-    CONSTRAINT fk_inventory_log_warehouses
-        FOREIGN KEY(warehouse_id)
-          REFERENCES warehouses(id)
-          ON DELETE SET NULL
-);
+  CONSTRAINT fk_inventory_log_warehouses
+    FOREIGN KEY(warehouse_id)
+    REFERENCES warehouses(id)
+    ON DELETE SET NULL,
 
-CREATE TYPE inventory_transaction_action AS ENUM (
-  'SALES', 'DEPOSIT'
-);
-
-CREATE TABLE IF NOT EXISTS inventory_transactions (
-  id BIGSERIAL PRIMARY KEY NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
-  organization_id BIGINT NOT NULL,
-  action inventory_transaction_action NOT NULL,
-
-  CONSTRAINT fk_inventory_transactions_organizations
-      FOREIGN KEY(organization_id)
-  	  REFERENCES organizations(id)
-  	  ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS inventory_transaction_items (
-  id BIGSERIAL PRIMARY KEY NOT NULL,
-  inventory_transaction_id BIGINT NOT NULL,
-  inventory_log_id BIGINT NOT NULL,
-
-  CONSTRAINT fk_inventory_transactions_items_items_sales
+  CONSTRAINT fk_inventory_logs_inventory_transactions
     FOREIGN KEY(inventory_transaction_id)
-	  REFERENCES inventory_transactions(id)
-	  ON DELETE CASCADE,
-
-  CONSTRAINT fk_inventory_transactions_items_items_products
-    FOREIGN KEY(inventory_log_id)
-	  REFERENCES inventory_logs(id)
-	  ON DELETE CASCADE
+    REFERENCES inventory_transactions(id)
 );
 
 INSERT INTO permissions (id, name) VALUES (1, 'superuser');

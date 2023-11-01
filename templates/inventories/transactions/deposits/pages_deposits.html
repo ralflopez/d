@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block title %}Deposits{% endblock %} {% block
+content %}
+<div class="m-4">
+  <h1 class="font-medium text-3xl hidden md:block mb-4">Deposits</h1>
+  <div class="flex flex-col md:flex-row mb-2">
+    <div class="flex flex-1 order-2 md:order-1 w-full">
+    </div>
+    <div
+      class="flex justify-between items-center mb-2 md:mb-0 order-1 md:order-2"
+    >
+      <h1 class="font-medium text-2xl md:hidden">Deposits</h1>
+      <button class="btn btn-primary" onclick="add_product_modal.showModal()">
+        Deposit Product
+      </button>
+    </div>
+  </div>
+  <!-- Table -->
+  <div id="table-container" class="overflow-x-auto overflow-y-hidden pb-24">
+    <table id="deposits-table" class="table table-zebra">
+      <!-- head -->
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Action</th>
+          <th># of Items</th>
+        </tr>
+      </thead>
+      {% include "inventories/transactions/deposits/fragments/table_entries.html" %}
+    </table>
+  </div>
+</div>
+{% endblock %} {% block dialogs %}
+<!-- Add Modal -->
+<dialog id="add_product_modal" class="modal">
+  <div class="modal-box">
+    <button
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      onclick="add_product_modal.close()"
+    >
+      ✕
+    </button>
+    <h3 class="font-bold text-lg">Add Product</h3>
+    <form
+      hx-post="/products"
+      hx-target="#products-table tbody"
+      hx-swap="outerHTML"
+      hx-on::after-request="this.reset(); add_product_modal.close();"
+      _="on htmx:afterRequest set #product-search.value to ''"
+    >
+      <label for="add-product-sku" class="label">
+        <span class="label-text">SKU</span>
+      </label>
+      <input
+        id="add-product-sku"
+        name="sku"
+        type="text"
+        placeholder="SKU"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-brand" class="label">
+        <span class="label-text">Brand</span>
+      </label>
+      <input
+        id="add-product-brand"
+        name="brand"
+        type="text"
+        placeholder="Brand"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-name" class="label">
+        <span class="label-text">Name</span>
+      </label>
+      <input
+        id="add-product-name"
+        name="name"
+        type="text"
+        placeholder="Name"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-description" class="label">
+        <span class="label-text">Description</span>
+      </label>
+      <input
+        id="add-product-description"
+        name="description"
+        type="text"
+        placeholder="Description"
+        class="input input-bordered w-full"
+      />
+      <label for="add-product-price" class="label">
+        <span class="label-text">Price</span>
+      </label>
+      <input
+        id="add-product-price"
+        name="price"
+        type="number"
+        placeholder="Price"
+        class="input input-bordered w-full"
+      />
+      <div class="flex justify-end mt-4">
+        <button type="submit" class="btn btn btn-active">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-active ml-2">
+          Add
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="modal-backdrop">
+    <button onclick="add_product_modal.close()">close</button>
+  </div>
+</dialog>
+{% endblock %}
